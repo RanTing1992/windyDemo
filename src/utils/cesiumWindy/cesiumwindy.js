@@ -4,7 +4,7 @@ import {
   Ellipsoid,
   SceneTransforms,
   Cartesian2,
-  Math,
+  Math as cesiumMath,
 } from "Cesium";
 import CanvasParticle from "./canvasparticle";
 import CanvasWindField from "./canvasWindField";
@@ -32,15 +32,18 @@ export default class CesiumWindy {
     this.animateFrame = null; // requestAnimationFrame事件句柄，用来清除操作
     this.isdistory = false; // 是否销毁，进行删除操作
     this.windyColor = params.windyColor || new WindyColor();
+    console.log("初始化风场类");
     // eslint-disable-next-line
     this._init();
   }
 
   // eslint-disable-next-line
   _init() {
+    console.log("初始化风场类init");
     const self = this;
     // 创建风场网格
     this.windField = this.createField();
+
     this.initExtent = [
       this.windField.west - 180,
       this.windField.east - 180,
@@ -48,6 +51,7 @@ export default class CesiumWindy {
       this.windField.north,
     ];
     // 如果风场创建时，传入的参数有extent，就根据给定的extent，让随机生成的粒子落在extent范围内
+    console.log("初始化风场类this.extent", this.extent);
     if (this.extent.length !== 0) {
       this.extent = [
         Math.max(this.initExtent[0], this.extent[0]),
@@ -68,8 +72,10 @@ export default class CesiumWindy {
     this.canvasContext.globalAlpha = 0.6;
     this.animate();
     let then = Date.now();
+    console.log("初始化风场类this.particles", this.particles);
     (function frame() {
       if (!self.isdistory) {
+        console.log("requestAnimationFrame");
         self.animateFrame = requestAnimationFrame(frame);
         const now = Date.now();
         const delta = now - then;
@@ -327,8 +333,8 @@ export default class CesiumWindy {
             );
           if (cartographic) {
             // 将弧度转为度的十进制度表示
-            lng = Math.toDegrees(cartographic.longitude);
-            lat = Math.toDegrees(cartographic.latitude);
+            lng = cesiumMath.toDegrees(cartographic.longitude);
+            lat = cesiumMath.toDegrees(cartographic.latitude);
           }
         } else {
           // eslint-disable-next-line camelcase
