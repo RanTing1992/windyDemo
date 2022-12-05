@@ -6,7 +6,7 @@
       <div class="slider-demo-block">
         <span class="demonstration">粒子数</span>
         <el-slider
-          v-model="value1"
+          v-model="particlesNumber"
           :min="2000"
           :max="100000"
           :step="1000"
@@ -32,13 +32,13 @@ import {
 } from "Cesium";
 import { onMounted, ref, watch } from "vue";
 import CesiumWindy from "../../utils/cesiumWindy/cesiumWindy.js";
-const value1 = ref(0);
+const particlesNumber = ref(10000);
 const radio = ref(3);
-
 const globalExtent = ref([]);
 let viewer = null;
 let windy = null; //全局windy实例
-let windycanvas = null;
+let windycanvas = null; //风场的canvas
+let particlesNumberChangeTimer = null;
 //创建装风场的canvas
 function createCanvas() {
   windycanvas = document.createElement("canvas");
@@ -47,6 +47,7 @@ function createCanvas() {
   windycanvas.style["pointer-events"] = "none";
   windycanvas.style["z-index"] = 10;
   windycanvas.style["top"] = 0;
+  windycanvas.style["left"] = 0;
   document.getElementById("map-container").appendChild(windycanvas);
 }
 async function initWindy() {
@@ -63,7 +64,7 @@ async function initWindy() {
     clearTimeout(refreshTimer);
     hideWindy();
     setTimeout(function () {
-      windy.extent = globalExtent;
+      windy.extent = globalExtent.value;
       windy.redraw();
       showWindy();
     }, 200);
@@ -85,7 +86,7 @@ async function initWindy() {
   //鼠标左键、右键抬起
   handler.setInputAction(function (e) {
     if (mouse_down && mouse_move) {
-      windy.extent = globalExtent;
+      windy.extent = globalExtent.value;
       windy.redraw();
     }
     showWindy();
@@ -94,7 +95,7 @@ async function initWindy() {
   }, ScreenSpaceEventType.LEFT_UP);
   handler.setInputAction(function (e) {
     if (mouse_down && mouse_move) {
-      windy.extent = globalExtent;
+      windy.extent = globalExtent.value;
       windy.redraw();
     }
     showWindy();
@@ -122,7 +123,7 @@ async function initWindy() {
     canvasWidth: window.innerWidth,
     canvasHeight: window.innerHeight,
     speedRate: 5000,
-    particlesNumber: 10000,
+    particlesNumber: particlesNumber.value,
     maxAge: 120,
     frameRate: 10,
     color: "#ffffff",
@@ -133,7 +134,7 @@ async function initWindy() {
 //获取风场数据
 function getData() {
   return new Promise((resolve, reject) => {
-    fetch("/data/windydata.json", {
+    fetch("/data/data.json", {
       method: "GET",
     })
       .then((res) => res.json())
@@ -148,21 +149,22 @@ function getData() {
   });
 }
 function showWindy() {
-  if (windycanvas) {
-    console.log(windycanvas, "哈哈哈哈哈这个是什么鬼？");
-    windycanvas.style.display = "block";
-  }
+  // if (windycanvas) {
+  //   console.log(windycanvas, "哈哈哈哈哈这个是什么鬼？");
+  //   windycanvas.style.display = "block";
+  // }
 }
 function hideWindy() {
-  if (windycanvas) {
-    windycanvas.style.display = "none";
-  }
+  // if (windycanvas) {
+  //   windycanvas.style.display = "none";
+  // }
 }
 
 //获取当前三维窗口左上、右上、左下、右下坐标
 function getCesiumExtent() {
+  console.log("获取三维窗口坐标");
   let canvaswidth = window.innerWidth,
-    canvasheight = window.innerHeight;
+    canvasheight = window.innerHeight - 50;
 
   let left_top_pt = new Cartesian2(0, 0);
   let left_bottom_pt = new Cartesian2(0, canvasheight);
@@ -220,6 +222,16 @@ function getCesiumExtent() {
 }
 //粒子变化调用重新绘制风场
 function sliderChange(val) {}
+//粒子个数变化的时候重新绘制
+watch(particlesNumber, (val) => {
+  if (windy) {
+    particlesNumberChangeTimer && clearTimeout(particlesNumberChangeTimer);
+    windy.particlesNumber = val;
+    particlesNumberChangeTimer = setTimeout(function () {
+      windy.redraw();
+    }, 500);
+  }
+});
 watch(radio, (val) => {
   //清除所有图层
 
@@ -251,10 +263,10 @@ onMounted(() => {
     // terrainProvider: new CesiumTerrainProvider({
     //   url: "http://211.101.24.58:1951/irrlicht/services/samples/c3d_wenchang_terrain/C3DTerrainServer/data",
     // }),
-    imageryProvider: new ArcGisMapServerImageryProvider({
-      // url : 'data/worldimage/{z}/{x}/{y}.png',      //如果为本地相对路径，url为文件夹地址,
-      url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
-    }),
+    // imageryProvider: new ArcGisMapServerImageryProvider({
+    // url : 'data/worldimage/{z}/{x}/{y}.png',      //如果为本地相对路径，url为文件夹地址,
+    // url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
+    // }),
   });
   viewer.cesiumWidget.creditContainer.style.display = "none";
   viewer.scene.debugShowFramesPerSecond = true;
@@ -267,6 +279,13 @@ onMounted(() => {
 });
 </script>
 <style lang="scss" scoped>
+#map-container {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+}
 .full {
   width: 100%;
   height: 100%;

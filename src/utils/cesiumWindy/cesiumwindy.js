@@ -32,7 +32,6 @@ export default class CesiumWindy {
     this.animateFrame = null; // requestAnimationFrame事件句柄，用来清除操作
     this.isdistory = false; // 是否销毁，进行删除操作
     this.windyColor = params.windyColor || new WindyColor();
-    console.log("初始化风场类");
     // eslint-disable-next-line
     this._init();
   }
@@ -51,7 +50,6 @@ export default class CesiumWindy {
       this.windField.north,
     ];
     // 如果风场创建时，传入的参数有extent，就根据给定的extent，让随机生成的粒子落在extent范围内
-    console.log("初始化风场类this.extent", this.extent);
     if (this.extent.length !== 0) {
       this.extent = [
         Math.max(this.initExtent[0], this.extent[0]),
@@ -75,7 +73,6 @@ export default class CesiumWindy {
     console.log("初始化风场类this.particles", this.particles);
     (function frame() {
       if (!self.isdistory) {
-        console.log("requestAnimationFrame");
         self.animateFrame = requestAnimationFrame(frame);
         const now = Date.now();
         const delta = now - then;
@@ -259,14 +256,15 @@ export default class CesiumWindy {
     this.canvasContext.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
     this.canvasContext.globalCompositeOperation = "lighter"; // 重叠部分的颜色会被重新计算
     this.canvasContext.globalAlpha = 0.9;
-    // this.canvasContext.beginPath();
+    this.canvasContext.beginPath();
+    this.canvasContext.strokeStyle = this.color;
     // const gradient = this.canvasContext.createLinearGradient(0, 0, 170, 0);
     particles.forEach((particle) => {
       // eslint-disable-next-line
       const movetopos = self._tomap(particle.lng, particle.lat, particle);
       // eslint-disable-next-line
       const linetopos = self._tomap(particle.tlng, particle.tlat, particle);
-      self.canvasContext.beginPath();
+      // self.canvasContext.beginPath();
       // self.canvasContext.fillStyle = particle.color;
       // self.canvasContext.fill();
       // console.log(movetopos,linetopos);
@@ -276,14 +274,14 @@ export default class CesiumWindy {
         self.canvasContext.moveTo(movetopos[0], movetopos[1]);
         self.canvasContext.lineTo(linetopos[0], linetopos[1]);
         // self.canvasContext.fillStyle = particle.color;
-        self.canvasContext.strokeStyle = particle.color;
+        // self.canvasContext.strokeStyle = particle.color;
         // self.canvasContext.putImageData(0, 0, 0);
-        self.canvasContext.stroke();
+        // self.canvasContext.stroke();
         // self.canvasContext.strokeStyle = particle.color;
         // self.canvasContext.beginPath();
       }
     });
-    // this.canvasContext.stroke();
+    this.canvasContext.stroke();
   }
 
   // 随机数生成器（小数）
@@ -378,7 +376,7 @@ export default class CesiumWindy {
     // eslint-disable-next-line no-param-reassign
     particle.age = Math.round(Math.random() * this.maxAge); // 每一次生成都不一样
     // eslint-disable-next-line no-param-reassign
-    particle.color = this.windyColor.getWindColor(particle.speed);
+    //---- particle.color = this.windyColor.getWindColor(particle.speed);
     return particle;
   }
 
